@@ -1,4 +1,6 @@
 import csv
+import json
+
 from django.shortcuts import render
 from rest_framework.parsers import FileUploadParser, MultiPartParser
 from io import TextIOWrapper
@@ -29,29 +31,17 @@ def gsite_data_list(request):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['GET', 'PUT', 'DELETE'])
-def gsite_data_detail(request, pk):
-    try:
-        data = GSiteData.objects.get(pk=pk)
-    except GSiteData.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    if request.method == 'GET':
-        serializer = GSiteDataSerializer(data)
-        return Response(serializer.data)
-
-    elif request.method == 'PUT':
-        serializer = GSiteDataSerializer(data, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
     elif request.method == 'DELETE':
-        data.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        try:
+            data = json.loads(request.body)
+            ids_to_delete = data.get('id', [])  # Get IDs, default to empty list if not found
+            deleted_count = GSiteData.objects.filter(pk__in=ids_to_delete).delete()[0] #returns a tuple (rows_affected,row_ids)
+            return Response({'deleted': deleted_count}, status=status.HTTP_200_OK) #or status.HTTP_204_NO_CONTENT if you don't want to return the count
+        except json.JSONDecodeError:
+            return Response({'error': 'Invalid JSON payload'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-# Custom Functions
 
 @api_view(['GET'])
 def total_galamsey_sites(request):
@@ -79,3 +69,4 @@ def region_with_highest_galamsey_sites(request):
         })
     else:
         return Response({'message': 'No data available'}, status=404)
+

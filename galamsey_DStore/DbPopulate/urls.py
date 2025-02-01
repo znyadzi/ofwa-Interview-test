@@ -4,10 +4,12 @@ from . import views
 urlpatterns = [
     # CRUD Endpoints
     path('gsites/', views.gsite_data_list, name='gsite-data-list'),
-    path('gsites/<int:pk>/', views.gsite_data_detail, name='gsite-data-detail'),
 
     #  Endpoints
+    #Total Galamsey Sites
     path('total-galamsey-sites/', views.total_galamsey_sites, name='total-galamsey-sites'),
+
+    #Average Galamsay Site per Region
     path('average-galamsey-sites-per-region/', views.average_galamsey_sites_per_region, name='average-galamsey-sites-per-region'),
 
     # New Endpoint: Region with Highest Galamsey Sites
