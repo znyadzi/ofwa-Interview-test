@@ -35,7 +35,7 @@ Illegal mining (Galamsey) is a significant environmental and social issue in man
 - **Backend**: Django, Django REST Framework
 - **Database**: SQLite
 - **Frontend**: Django REST Framework's Browsable API
-- **Tools**: Python, Git, Postman (for API testing)
+- **Tools**: Python, Git, django administration (for API testing)
 
 ---
 
