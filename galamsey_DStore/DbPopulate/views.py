@@ -1,10 +1,14 @@
+import csv
 from django.shortcuts import render
+from io import TextIOWrapper
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import GSiteData
 from .serializers import GSiteDataSerializer
 from django.db.models import Avg, Sum
+from .forms import CSVUploadForm
+from django.http import JsonResponse
 
 # Create your views here.
 
@@ -74,3 +78,31 @@ def region_with_highest_galamsey_sites(request):
         })
     else:
         return Response({'message': 'No data available'}, status=404)
+
+@api_view(['POST'])
+def upload_csv(request):
+    if request.method == 'POST':
+        form = CSVUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            csv_file = request.FILES['file']
+            decoded_file = TextIOWrapper(csv_file.file, encoding='utf-8')
+            reader = csv.DictReader(decoded_file)
+
+            # Validate CSV headers
+            required_headers = ['Town', 'Region', 'Number_of_Galamsay_Sites']
+            if not all(header in reader.fieldnames for header in required_headers):
+                return JsonResponse({'error': 'CSV file must have headers: Town, Region, Number_of_Galamsay_Sites'}, status=400)
+
+            # Process CSV rows
+            for row in reader:
+                GSiteData.objects.create(
+                    Town=row['Town'],
+                    Region=row['Region'],
+                    Number_of_Galamsay_Sites=int(row['Number_of_Galamsay_Sites'])
+                )
+
+            return JsonResponse({'message': 'CSV data uploaded successfully'}, status=201)
+    else:
+        form = CSVUploadForm()
+
+    return render(request, 'upload.html', {'form': form})
