@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from django.http import HttpResponse
 
 # Simple homepage view
@@ -28,4 +28,6 @@ def home(request):
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", home),  # Add this line to handle requests to "/"
-]
+    path("api/", include('DbPopulate.urls')),  # Include DGApp URLs
+    ]
+
