@@ -16,7 +16,16 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.contrib import admin
+from django.urls import path
+from django.http import HttpResponse
+
+# Simple homepage view
+def home(request):
+    return HttpResponse("Welcome to the homepage!") #This was for testing
+    #return redirect('/admin/login/')  # Redirects to Django's admin login page
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path("admin/", admin.site.urls),
+    path("", home),  # Add this line to handle requests to "/"
 ]
