@@ -57,3 +57,20 @@ def total_galamsey_sites(request):
 def average_galamsey_sites_per_region(request):
     average = GSiteData.objects.values('Region').annotate(avg_sites=Avg('Number_of_Galamsay_Sites'))
     return Response(average)
+
+
+@api_view(['GET'])
+def region_with_highest_galamsey_sites(request):
+    # Aggregate the total number of Galamsey sites per region
+    regions = GSiteData.objects.values('Region').annotate(total_sites=Sum('Number_of_Galamsay_Sites')).order_by(
+        '-total_sites')
+
+    # Get the region with the highest number of Galamsey sites
+    if regions:
+        highest_region = regions[0]
+        return Response({
+            'region': highest_region['Region'],
+            'total_galamsey_sites': highest_region['total_sites']
+        })
+    else:
+        return Response({'message': 'No data available'}, status=404)
