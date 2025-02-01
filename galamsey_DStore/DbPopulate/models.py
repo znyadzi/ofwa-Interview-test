@@ -9,6 +9,7 @@ class GSiteData(models.Model):
 
     class Meta:
         verbose_name_plural = "GSite Data" #Fixes Django admin pluralization
+        unique_together = ('Town', 'Region')  # Ensures uniqueness of Town and Region combination
 
     def __str__(self):
-        return f"{self.Town} ({self.Region}) - {self.Number_of_Galamsay_Sites} sites"
+        return f"The Region {self.Region} has {self.Number_of_Galamsay_Sites} Galamsay sites in the {self.Town} city"

@@ -79,34 +79,3 @@ def region_with_highest_galamsey_sites(request):
         })
     else:
         return Response({'message': 'No data available'}, status=404)
-
-@api_view(['POST'])
-@parser_classes([MultiPartParser])
-def upload_csv(request):
-    try:  # Enclose the entire file processing within the try block
-        if 'file' not in request.FILES:
-            return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
-
-        csv_file = request.FILES['file']
-        decoded_file = TextIOWrapper(csv_file.file, encoding='utf-8')
-        reader = csv.DictReader(decoded_file)
-
-        # Validate CSV headers (case-insensitive)
-        required_headers = ['Town', 'Region', 'Number_of_Galamsay_Sites']
-        if not all(header.lower() in map(str.lower, reader.fieldnames) for header in required_headers):
-            missing_headers = set(required_headers) - set(map(str.lower, reader.fieldnames))
-            return Response({'error': f'CSV file is missing required headers: {", ".join(missing_headers)}'}, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = GSiteDataSerializer(data=[row for row in reader], many=True)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'message': 'CSV data uploaded successfully', 'data': serializer.data}, status=status.HTTP_201_CREATED)
-        else:
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-    except (csv.Error, UnicodeDecodeError) as e:  # Handle CSV and Unicode errors
-        return Response({'error': f'Error processing CSV file: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
-    except Exception as e: # Catch any other exceptions during processing
-        return Response({'error': f'An unexpected error occurred: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
