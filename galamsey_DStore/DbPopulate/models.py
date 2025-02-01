@@ -12,4 +12,4 @@ class GSiteData(models.Model):
         unique_together = ('Town', 'Region')  # Ensures uniqueness of Town and Region combination
 
     def __str__(self):
-        return f"The Region {self.Region} has {self.Number_of_Galamsay_Sites} Galamsay sites in the {self.Town} city"
+        return f"The Region [{self.Region}] has [{self.Number_of_Galamsay_Sites}] Galamsay sites in the [{self.Town}] city"
