@@ -1,0 +1,197 @@
+# Mini Galamsey Data Analysis Tool
+
+This project is a Django REST API designed to manage and analyze data related to illegal mining (Galamsey) sites in various towns and regions. It provides functionalities to:
+- Upload and manage Galamsey site data via CSV files.
+- Perform CRUD operations on the data.
+- Analyze the data to calculate:
+  - The total number of Galamsey sites across all regions.
+  - The average number of Galamsey sites per region.
+  - The region with the highest number of Galamsey sites.
+
+---
+
+## Why This Project Was Created
+
+Illegal mining (Galamsey) is a significant environmental and social issue in many regions. This project was created to:
+1. Provide a centralized platform for storing and managing Galamsey site data.
+2. Enable easy analysis of the data to identify trends and hotspots.
+3. Support decision-making for environmental and regulatory bodies.
+
+---
+
+## Features
+
+- **CRUD Operations**: Create, Read, Update, and Delete Galamsey site data.
+- **CSV Upload**: Upload Galamsey site data via CSV files.
+- **Data Analysis**:
+  - Total number of Galamsey sites across all regions.
+  - Average number of Galamsey sites per region.
+  - Region with the highest number of Galamsey sites.
+
+---
+
+## Technologies Used
+
+- **Backend**: Django, Django REST Framework
+- **Database**: SQLite
+- **Frontend**: Django REST Framework's Browsable API
+- **Tools**: Python, Git, django administration (for API testing)
+
+---
+
+## Setup Instructions
+
+### 1. Prerequisites
+
+- Python 3.x
+- pip (Python package manager)
+- Git (optional, for cloning the repository)
+
+---
+
+### 2. Clone the Repository
+
+If you have Git installed, clone the repository:
+```bash
+git clone https://github.com/znyadzi/galamsey-data-analysis-tool.git
+cd galamsey-data-analysis-tool
+
+# Project Setup Guide
+
+## 3. Set Up a Virtual Environment
+
+Create a virtual environment:
+
+```bash
+python3 -m venv venv
+```
+
+Activate the virtual environment:
+
+### On Windows:
+
+```bash
+venv\Scripts\activate
+```
+
+### On macOS/Linux:
+
+```bash
+source venv/bin/activate
+```
+
+## 4. Install Dependencies
+
+Install the required Python packages:
+
+```bash
+pip install -r requirements.txt
+```
+
+## 5. Set Up the Database
+
+Apply migrations to set up the database:
+
+```bash
+python3 manage.py migrate
+```
+
+Create a superuser (admin) account:
+
+```bash
+python3 manage.py createsuperuser
+```
+
+## 6. Run the Development Server
+
+Start the Django development server:
+
+```bash
+python3 manage.py runserver
+```
+
+The API will be available at:
+
+[http://127.0.0.1:8000/](http://127.0.0.1:8000/)
+
+---
+
+## API Endpoints
+
+### 1. CRUD Operations
+
+- **List all entries:** `GET /api/gsites/`
+- **Create a new entry:** `POST /api/gsites/`
+- **Retrieve a specific entry:** `GET /api/gsites/<id>/`
+- **Update a specific entry:** `PUT /api/gsites/<id>/`
+- **Delete a specific entry:** `DELETE /api/gsites/<id>/`
+
+### 2. Custom Functions
+
+- **Total Galamsey Sites:** `GET /api/total-galamsey-sites/`
+- **Average Galamsey Sites per Region:** `GET /api/average-galamsey-sites-per-region/`
+- **Region with Highest Galamsey Sites:** `GET /api/region-with-highest-galamsey-sites/`
+
+### 3. CSV Upload
+
+- **Upload CSV:** 
+  - Copy your CSV file into the galamsey\_dataset folder and run:\
+    &#x20;python3 manage.py import\_csv galamsey\_dataset/your\_dataset.csv
+
+#### CSV File Requirements
+
+The CSV file must have the following headers:
+
+- `Town`
+- `Region`
+- `Number_of_Galamsay_Sites`
+
+---
+
+## Testing the API
+
+You can test the API using:
+
+- **Django REST Framework's Browsable API:** Visit the endpoints in your browser.
+- **Postman:** Use Postman to send requests to the API.
+- **cURL:** Use cURL commands to interact with the API.
+
+### Running Tests
+
+To run the automated tests:
+
+```bash
+python manage.py test
+```
+
+---
+
+## Contributing
+
+This project is not open for contributions but, if for any reason you want to contribute to this project, see the contact details below.
+This project if open-source for whoever wants to copy and use it for learning purposes and for a special funtionality of a broader project.
+---
+
+## License
+
+The project requirements was designed for OFWA( The Open Foundations West Africa ) team as an interview test for a Technical coordinator role.
+All rights reserved.
+This project is licensed under the MIT License. See the `LICENSE` file for details.
+
+---
+
+## Acknowledgments
+
+- **Open Foundations West Africa** for structuring an engaging onboarding project for their Technical coordinator
+- **Django** and **Django REST Framework** for providing the tools to build this API.
+- **The Python community** for their extensive documentation and support.
+
+---
+
+## Contact
+
+For questions or feedback, please contact:
+
+- **Your Name:** [znyadzi1@gmail.com](mailto\:znyadzi1@gmail.com)
+- **GitHub:** [znyadzi](https://github.com/znyadzi)
+
