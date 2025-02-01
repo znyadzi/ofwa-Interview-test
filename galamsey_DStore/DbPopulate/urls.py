@@ -13,5 +13,4 @@ urlpatterns = [
     # New Endpoint: Region with Highest Galamsey Sites
     path('region-with-highest-galamsey-sites/', views.region_with_highest_galamsey_sites, name='region-with-highest-galamsey-sites'),
 
-    # CSV Upload Endpoint
 ]
