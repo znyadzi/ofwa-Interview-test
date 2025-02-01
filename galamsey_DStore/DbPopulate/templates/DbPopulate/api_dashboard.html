@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Dashboard</title>
+    <style>
+        .container {
+            display: flex;
+            justify-content: space-around;
+        }
+        .column {
+            width: 30%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin: 10px;
+        }
+        h2 {
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>API Dashboard</h1>
+    <div class="container">
+        <!-- Column 1: List of Galamsey Sites -->
+        <div class="column">
+            <h2>Galamsey Sites</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Town</th>
+                        <th>Region</th>
+                        <th>Number of Sites</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for site in gsite_data %}
+                    <tr>
+                        <td>{{ site.Town }}</td>
+                        <td>{{ site.Region }}</td>
+                        <td>{{ site.Number_of_Galamsay_Sites }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Column 2: Total Galamsey Sites -->
+        <div class="column">
+            <h2>Total Galamsey Sites</h2>
+            <p><strong>Total:</strong> {{ total_galamsey_sites }}</p>
+        </div>
+
+        <!-- Column 3: Average Galamsey Sites per Region -->
+        <div class="column">
+            <h2>Average Galamsey Sites per Region</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Region</th>
+                        <th>Average Sites</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for region in average_galamsey_sites_per_region %}
+                    <tr>
+                        <td>{{ region.Region }}</td>
+                        <td>{{ region.avg_sites|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

@@ -72,9 +72,12 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            'DIRS': [BASE_DIR / 'DbPopulate/templates'],
         },
     },
 ]
+
+
 
 WSGI_APPLICATION = 'galamsey_DStore.wsgi.application'
 
