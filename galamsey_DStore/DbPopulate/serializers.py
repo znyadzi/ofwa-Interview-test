@@ -9,3 +9,11 @@ class GSiteDataSerializer(serializers.ModelSerializer):
 class HighestRegionSerializer(serializers.Serializer):
     region = serializers.CharField()
     total_galamsey_sites = serializers.IntegerField()
+
+class ThresHoldDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GSiteData
+        fields = 'Number_of_Galamsay_Sites'
+
+class CSVUploadSerializer(serializers.Serializer):
+    file = serializers.FileField()

@@ -1,17 +1,16 @@
-import csv
 import json
+import csv
+import io
+from operator import index
 
-from django.shortcuts import render
-from rest_framework.parsers import FileUploadParser, MultiPartParser
-from io import TextIOWrapper
 from rest_framework import status
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.response import Response
 from .models import GSiteData
-from .serializers import GSiteDataSerializer
+from .serializers import GSiteDataSerializer, ThresHoldDataSerializer, CSVUploadSerializer
 from django.db.models import Avg, Sum
-from .forms import CSVUploadForm
-from django.http import JsonResponse
+from rest_framework.parsers import MultiPartParser, FormParser
+
 
 # Create your views here.
 
@@ -70,3 +69,61 @@ def region_with_highest_galamsey_sites(request):
     else:
         return Response({'message': 'No data available'}, status=404)
 
+@api_view(['POST'])
+def regions_with_sites_above_threshold(request):
+    # Get the threshold value from request data
+    threshold = request.data.get('threshold', None)
+
+    if threshold is None:
+        return Response({'error': 'Threshold parameter is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        threshold = int(threshold)  # Convert threshold to an integer
+    except ValueError:
+        return Response({'error': 'Threshold must be a valid integer'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Query the database for regions with sites above the threshold
+    sites_above_threshold = GSiteData.objects.filter(Number_of_Galamsay_Sites__gt=threshold)
+
+    # Serialize the filtered results
+    serializer = GSiteDataSerializer(sites_above_threshold, many=True)
+
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@parser_classes([MultiPartParser, FormParser])
+def upload_csv(request):
+    """ Endpoint to upload CSV file and save data to the database. """
+
+    file_serializer = CSVUploadSerializer(data=request.data)
+
+    if file_serializer.is_valid():
+        csv_file = request.FILES['file']
+
+        if not csv_file.name.endswith('.csv'):
+            return Response({"error": "Only CSV files are accepted"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Read CSV file
+        decoded_file = csv_file.read().decode('utf-8')
+        io_string = io.StringIO(decoded_file)
+        reader = csv.DictReader(io_string)  # Read CSV with headers
+
+        # Insert data into the database
+        new_entries = []
+        for index, row in enumerate(reader):  # 'rows' is a list or iterable
+            if index == 0:
+                continue  # Skip the first row
+            
+            new_entries.append(GSiteData(
+                Town=row.get("Town"),
+                Region=row.get("Region"),
+                Number_of_Galamsay_Sites=int(row.get("Number_of_Galamsay_Sites", 0))
+            ))
+
+        # Bulk create for performance
+        GSiteData.objects.bulk_create(new_entries)
+
+        return Response({"message": "CSV data uploaded successfully"}, status=status.HTTP_201_CREATED)
+
+    return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
