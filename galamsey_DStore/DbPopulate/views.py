@@ -111,15 +111,28 @@ def upload_csv(request):
 
         # Insert data into the database
         new_entries = []
-        for index, row in enumerate(reader):  # 'rows' is a list or iterable
+        for index, row in enumerate(reader):
             if index == 0:
-                continue  # Skip the first row
-            
-            new_entries.append(GSiteData(
-                Town=row.get("Town"),
-                Region=row.get("Region"),
-                Number_of_Galamsay_Sites=int(row.get("Number_of_Galamsay_Sites", 0))
-            ))
+                continue  # Skip header row
+
+            try:
+                number_of_sites = int(row.get("Number_of_Galamsay_Sites", 0))  # Use dictionary keys
+
+                _, created = GSiteData.objects.get_or_create(
+                    Town=row.get("Town"),
+                    Region=row.get("Region"),
+                    defaults={'Number_of_Galamsay_Sites': number_of_sites}
+                )
+
+                if not created:
+                    GSiteData.objects.filter(
+                        Town=row.get("Town"),
+                        Region=row.get("Region")
+                    ).update(Number_of_Galamsay_Sites=number_of_sites)
+
+            except ValueError:
+                print(f"Skipping row: Town={row.get('Town')}, Region={row.get('Region')}. Invalid number format.")
+                continue
 
         # Bulk create for performance
         GSiteData.objects.bulk_create(new_entries)
