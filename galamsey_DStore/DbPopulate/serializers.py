@@ -4,7 +4,7 @@ from .models import GSiteData
 class GSiteDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = GSiteData
-        fields = ['id', 'Town', 'Region', 'Number_of_Galamsay_Sites']
+        fields = ['Town', 'Region', 'Number_of_Galamsay_Sites']
 
 class HighestRegionSerializer(serializers.Serializer):
     region = serializers.CharField()

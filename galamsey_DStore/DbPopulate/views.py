@@ -2,8 +2,10 @@ import json
 import csv
 import io
 import logging
-from operator import index
-
+from django.urls import reverse
+from django.http import JsonResponse, HttpResponse
+from django.db import IntegrityError
+from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.response import Response
@@ -19,39 +21,27 @@ from rest_framework.parsers import MultiPartParser, FormParser
 @api_view(['GET'])
 def api_root(request):
     """
-        Root endpoint for the Galamsey API.
-        """
+    API Root endpoint that provides clickable links to all API endpoints in an HTML-rendered view.
+    """
     endpoints = {
-        "message": "Welcome to the Galamsey API!",
-        "endpoints": {
-            "upload-csv": {
-                "url": "/upload-csv/",
-                "method": "POST",
-                "description": "Upload a CSV file to populate the GalamseyData database."
-            },
-            "average-galamsey-sites": {
-                "url": "/average-galamsey-sites/",
-                "method": "GET",
-                "description": "Get the average number of Galamsey sites per region."
-            },
-            "region-highest-galamsey-sites": {
-                "url": "/region-highest-galamsey-sites/",
-                "method": "GET",
-                "description": "Get the region with the highest number of Galamsey sites."
-            },
-            "total-galamsey-sites": {
-                "url": "/total-galamsey-sites/",
-                "method": "GET",
-                "description": "Get the total number of Galamsey sites across all regions."
-            },
-            "regions-above-threshold": {
-                "url": "/regions-above-threshold/?threshold=<int>",
-                "method": "GET",
-                "description": "Get regions with Galamsey sites greater than the specified threshold."
-            }
-        }
+        "GSite Data List (CRUD)": reverse('gsite-data-list'),
+        "Total Galamsey Sites": reverse('total-galamsey-sites'),
+        "Average Galamsey Sites Per Region": reverse('average-galamsey-sites-per-region'),
+        "Region with Highest Galamsey Sites": reverse('region-with-highest-galamsey-sites'),
+        "Regions Above a Threshold": reverse('regions_above_threshold'),
+        "Upload CSV File": reverse('upload-csv'),
     }
-    return Response(endpoints)
+
+    # Generate an HTML response with clickable links
+    html_response = '<center><h1>Welcome to the Galamsey Site Analyser API  Page</h1><center>'
+    html_response += '<h3>Below are the available endpoints:</h3>'
+    html_response += '<h2>'
+    for name, url in endpoints.items():
+        full_url = request.build_absolute_uri(url)
+        html_response += f'<p><a href="{full_url}">{name}</a></p><br>'
+    html_response += '</h2>'
+
+    return HttpResponse(html_response)
 
 
 
@@ -135,60 +125,70 @@ logger = logging.getLogger(__name__)
 @api_view(['POST'])
 @parser_classes([MultiPartParser, FormParser])
 def upload_csv(request):
-    """ Endpoint to upload CSV file and save data to the database. """
-    file_serializer = CSVUploadSerializer(data=request.data)
+    if request.method == 'POST':
+        # Check if a file is included in the request
+        if 'file' not in request.FILES:
+            return JsonResponse({'error': 'No file provided'}, status=400)
 
-    if file_serializer.is_valid():
-        csv_file = request.FILES['file']
+        # Retrieve the uploaded file
+        file = request.FILES['file']
 
-        if not csv_file.name.endswith('.csv'):
-            return Response({"error": "Only CSV files are accepted"}, status=status.HTTP_400_BAD_REQUEST)
+        # Check if the file is a CSV
+        if not file.name.endswith('.csv'):
+            return JsonResponse({'error': 'Invalid file format. Only CSV files are allowed.'}, status=400)
 
-        # Read CSV file
-        decoded_file = csv_file.read().decode('utf-8')
-        io_string = io.StringIO(decoded_file)
-        reader = csv.DictReader(io_string)  # Read CSV with headers
-        next(reader, None)  # Skip the header row
+        # Decode and read the file
+        try:
+            data = io.StringIO(file.read().decode('utf-8'))
+        except UnicodeDecodeError:
+            return JsonResponse({'error': 'Unable to decode file. Ensure the file encoding is UTF-8.'}, status=400)
 
-        # Insert data into the database
-        skipped_rows = []
-        valid_rows = []
-        for index, row in enumerate(reader):
-            town = row.get("Town", "Unknown").strip()
-            region = row.get("Region", "Unknown").strip()
-            number_of_sites = row.get("Number_of_Galamsay_Sites", "0").strip()  # Default to 0
+        # Parse the CSV and process data
+        csv_reader = csv.reader(data)
+        next(csv_reader)  # Skip the header row
 
+        duplicate_entries = []
+        invalid_entries = []
+        successful_inserts = 0
+
+        for row in csv_reader:
+            if len(row) != 3:
+                # Skip rows with incorrect number of columns
+                invalid_entries.append({'row': row, 'error': 'Invalid row format'})
+                continue
+
+            town, region, number_of_sites = row
+
+            # Validate `number_of_sites` is an integer
             try:
                 number_of_sites = int(number_of_sites)
-                if number_of_sites < 0:
-                    number_of_sites = 0  # Set to 0 instead of skipping
-                    skipped_rows.append(f"Row {index + 2}: Negative Number_of_Galamsay_Sites corrected to 0")
-                valid_rows.append({'Town': town, 'Region': region, 'Number_of_Galamsay_Sites': number_of_sites})
             except ValueError:
-                skipped_rows.append(f"Row {index + 2}: Invalid Number_of_Galamsay_Sites (non-numeric value)")
-                logger.warning(f"Row {index + 2} skipped: {row}")  # Log the entire row
+                invalid_entries.append({'row': row, 'error': 'Invalid datatype for Number_of_Galamsay_Sites'})
+                continue
 
-        # Insert valid rows into the database
-        for row in valid_rows:
-            _, created = GSiteData.objects.get_or_create(
-                Town=row['Town'],
-                Region=row['Region'],
-                defaults={'Number_of_Galamsay_Sites': row['Number_of_Galamsay_Sites']}
-            )
-            #The below lines are removed because they were using the wrong variables
-            #if not created:
-            #    GSiteData.objects.filter(
-            #        Town=town,
-            #        Region=region
-            #    ).update(Number_of_Galamsay_Sites=number_of_sites)
+            # Create entry in the database
+            try:
+                GSiteData.objects.create(
+                    Town=town.strip(),
+                    Region=region.strip(),
+                    Number_of_Galamsay_Sites=number_of_sites
+                )
+                successful_inserts += 1
+            except IntegrityError:
+                # Skip duplicate entries based on Town and Region uniqueness constraint
+                duplicate_entries.append({'row': row, 'error': 'Duplicate entry'})
 
-        # Log skipped rows for debugging
-        if skipped_rows:
-            logger.warning(f"Skipped rows: {skipped_rows}")
+        # Prepare response with summary of results
+        response = {
+            'status': 'success',
+            'details': {
+                'successful_inserts': successful_inserts,
+                'duplicates': len(duplicate_entries),
+                'invalid_entries': len(invalid_entries),
+                'skipped_duplicates': duplicate_entries,
+                'skipped_invalid_entries': invalid_entries,
+            },
+        }
+        return JsonResponse(response, status=200)
 
-        return Response({
-            "message": "CSV data uploaded successfully",
-            "skipped_rows": skipped_rows
-        }, status=status.HTTP_201_CREATED)
-
-    return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return JsonResponse({'error': 'Unsupported HTTP method. Use POST instead.'}, status=405)
