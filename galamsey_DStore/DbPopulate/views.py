@@ -148,41 +148,39 @@ def upload_csv(request):
         decoded_file = csv_file.read().decode('utf-8')
         io_string = io.StringIO(decoded_file)
         reader = csv.DictReader(io_string)  # Read CSV with headers
+        next(reader, None)  # Skip the header row
 
         # Insert data into the database
         skipped_rows = []
+        valid_rows = []
         for index, row in enumerate(reader):
-            town = row.get("Town", "").strip()
-            region = row.get("Region", "").strip()
-            number_of_sites = row.get("Number_of_Galamsay_Sites", "").strip()
+            town = row.get("Town", "Unknown").strip()
+            region = row.get("Region", "Unknown").strip()
+            number_of_sites = row.get("Number_of_Galamsay_Sites", "0").strip()  # Default to 0
 
-            # Skip rows with missing or invalid Town or Region
-            if not town or not region:
-                skipped_rows.append(f"Row {index + 1}: Missing Town or Region")
-                continue
-
-            # Skip rows with invalid Number_of_Galamsay_Sites
             try:
                 number_of_sites = int(number_of_sites)
-                if number_of_sites < 0:  # Skip negative values
-                    skipped_rows.append(f"Row {index + 1}: Invalid Number_of_Galamsay_Sites (negative value)")
-                    continue
+                if number_of_sites < 0:
+                    number_of_sites = 0  # Set to 0 instead of skipping
+                    skipped_rows.append(f"Row {index + 2}: Negative Number_of_Galamsay_Sites corrected to 0")
+                valid_rows.append({'Town': town, 'Region': region, 'Number_of_Galamsay_Sites': number_of_sites})
             except ValueError:
-                skipped_rows.append(f"Row {index + 1}: Invalid Number_of_Galamsay_Sites (non-numeric value)")
-                continue
+                skipped_rows.append(f"Row {index + 2}: Invalid Number_of_Galamsay_Sites (non-numeric value)")
+                logger.warning(f"Row {index + 2} skipped: {row}")  # Log the entire row
 
-            # Create or update the record
+        # Insert valid rows into the database
+        for row in valid_rows:
             _, created = GSiteData.objects.get_or_create(
-                Town=town,
-                Region=region,
-                defaults={'Number_of_Galamsay_Sites': number_of_sites}
+                Town=row['Town'],
+                Region=row['Region'],
+                defaults={'Number_of_Galamsay_Sites': row['Number_of_Galamsay_Sites']}
             )
-
-            if not created:
-                GSiteData.objects.filter(
-                    Town=town,
-                    Region=region
-                ).update(Number_of_Galamsay_Sites=number_of_sites)
+            #The below lines are removed because they were using the wrong variables
+            #if not created:
+            #    GSiteData.objects.filter(
+            #        Town=town,
+            #        Region=region
+            #    ).update(Number_of_Galamsay_Sites=number_of_sites)
 
         # Log skipped rows for debugging
         if skipped_rows:
