@@ -1,8 +1,12 @@
 from django.urls import path
+from rest_framework.routers import DefaultRouter
 from . import views
 from .views import upload_csv
 
 urlpatterns = [
+
+    path('', views.api_root, name='Endpoint-Landing-Page'),  # Root endpoint
+
     # CRUD Endpoints
     path('gsites/', views.gsite_data_list, name='gsite-data-list'),
 

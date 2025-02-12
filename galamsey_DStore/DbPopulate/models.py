@@ -3,6 +3,7 @@ from django.db import models
 # Create your models here.
 
 class GSiteData(models.Model):
+    Id = models.AutoField(primary_key=True)
     Town = models.CharField(max_length=100)
     Region = models.CharField(max_length=100)
     Number_of_Galamsay_Sites = models.IntegerField()

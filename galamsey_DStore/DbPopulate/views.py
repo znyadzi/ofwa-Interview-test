@@ -1,6 +1,7 @@
 import json
 import csv
 import io
+import logging
 from operator import index
 
 from rest_framework import status
@@ -15,6 +16,44 @@ from rest_framework.parsers import MultiPartParser, FormParser
 # Create your views here.
 
 # CRUD Operations
+@api_view(['GET'])
+def api_root(request):
+    """
+        Root endpoint for the Galamsey API.
+        """
+    endpoints = {
+        "message": "Welcome to the Galamsey API!",
+        "endpoints": {
+            "upload-csv": {
+                "url": "/upload-csv/",
+                "method": "POST",
+                "description": "Upload a CSV file to populate the GalamseyData database."
+            },
+            "average-galamsey-sites": {
+                "url": "/average-galamsey-sites/",
+                "method": "GET",
+                "description": "Get the average number of Galamsey sites per region."
+            },
+            "region-highest-galamsey-sites": {
+                "url": "/region-highest-galamsey-sites/",
+                "method": "GET",
+                "description": "Get the region with the highest number of Galamsey sites."
+            },
+            "total-galamsey-sites": {
+                "url": "/total-galamsey-sites/",
+                "method": "GET",
+                "description": "Get the total number of Galamsey sites across all regions."
+            },
+            "regions-above-threshold": {
+                "url": "/regions-above-threshold/?threshold=<int>",
+                "method": "GET",
+                "description": "Get regions with Galamsey sites greater than the specified threshold."
+            }
+        }
+    }
+    return Response(endpoints)
+
+
 
 @api_view(['GET', 'POST'])
 def gsite_data_list(request):
@@ -91,11 +130,12 @@ def regions_with_sites_above_threshold(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+logger = logging.getLogger(__name__)
+
 @api_view(['POST'])
 @parser_classes([MultiPartParser, FormParser])
 def upload_csv(request):
     """ Endpoint to upload CSV file and save data to the database. """
-
     file_serializer = CSVUploadSerializer(data=request.data)
 
     if file_serializer.is_valid():
@@ -110,33 +150,47 @@ def upload_csv(request):
         reader = csv.DictReader(io_string)  # Read CSV with headers
 
         # Insert data into the database
-        new_entries = []
+        skipped_rows = []
         for index, row in enumerate(reader):
-            if index == 0:
-                continue  # Skip header row
+            town = row.get("Town", "").strip()
+            region = row.get("Region", "").strip()
+            number_of_sites = row.get("Number_of_Galamsay_Sites", "").strip()
 
-            try:
-                number_of_sites = int(row.get("Number_of_Galamsay_Sites", 0))  # Use dictionary keys
-
-                _, created = GSiteData.objects.get_or_create(
-                    Town=row.get("Town"),
-                    Region=row.get("Region"),
-                    defaults={'Number_of_Galamsay_Sites': number_of_sites}
-                )
-
-                if not created:
-                    GSiteData.objects.filter(
-                        Town=row.get("Town"),
-                        Region=row.get("Region")
-                    ).update(Number_of_Galamsay_Sites=number_of_sites)
-
-            except ValueError:
-                print(f"Skipping row: Town={row.get('Town')}, Region={row.get('Region')}. Invalid number format.")
+            # Skip rows with missing or invalid Town or Region
+            if not town or not region:
+                skipped_rows.append(f"Row {index + 1}: Missing Town or Region")
                 continue
 
-        # Bulk create for performance
-        GSiteData.objects.bulk_create(new_entries)
+            # Skip rows with invalid Number_of_Galamsay_Sites
+            try:
+                number_of_sites = int(number_of_sites)
+                if number_of_sites < 0:  # Skip negative values
+                    skipped_rows.append(f"Row {index + 1}: Invalid Number_of_Galamsay_Sites (negative value)")
+                    continue
+            except ValueError:
+                skipped_rows.append(f"Row {index + 1}: Invalid Number_of_Galamsay_Sites (non-numeric value)")
+                continue
 
-        return Response({"message": "CSV data uploaded successfully"}, status=status.HTTP_201_CREATED)
+            # Create or update the record
+            _, created = GSiteData.objects.get_or_create(
+                Town=town,
+                Region=region,
+                defaults={'Number_of_Galamsay_Sites': number_of_sites}
+            )
+
+            if not created:
+                GSiteData.objects.filter(
+                    Town=town,
+                    Region=region
+                ).update(Number_of_Galamsay_Sites=number_of_sites)
+
+        # Log skipped rows for debugging
+        if skipped_rows:
+            logger.warning(f"Skipped rows: {skipped_rows}")
+
+        return Response({
+            "message": "CSV data uploaded successfully",
+            "skipped_rows": skipped_rows
+        }, status=status.HTTP_201_CREATED)
 
     return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
