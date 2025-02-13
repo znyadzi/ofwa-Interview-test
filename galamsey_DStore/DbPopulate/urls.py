@@ -1,7 +1,7 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 from . import views
-from .views import upload_csv
+from .views import upload_and_analyze_csv
 
 urlpatterns = [
 
@@ -23,6 +23,6 @@ urlpatterns = [
     #Region Above a threshold
     path('regions-above-threshold/', views.regions_with_sites_above_threshold, name='regions_above_threshold'),
 
-    path('upload-csv/', upload_csv, name='upload-csv'),
+    path('analysis-results/', upload_and_analyze_csv, name='upload-csv'),
 
 ]
