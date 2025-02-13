@@ -10,7 +10,7 @@ from django.utils.timezone import now
 from rest_framework import status
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.response import Response
-from .models import GSiteData, CsvFileData
+from .models import GSiteData
 from .serializers import GSiteDataSerializer, ThresHoldDataSerializer, CSVUploadSerializer
 from django.db.models import Avg, Sum
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -245,227 +245,227 @@ def regions_with_sites_above_threshold(request):
 
 logger = logging.getLogger(__name__)
 
-# @api_view(['POST'])
-# @parser_classes([MultiPartParser, FormParser])
-# def upload_csv(request):
-#     if request.method == 'POST':
-#         # Check if a file is included in the request
-#         if 'file' not in request.FILES:
-#             return JsonResponse({'error': 'No file provided'}, status=400)
-#
-#         # Retrieve the uploaded file
-#         file = request.FILES['file']
-#
-#         threshold = regions_with_sites_above_threshold(request)
-#
-#         # Check if the file is a CSV
-#         if not file.name.endswith('.csv'):
-#             return JsonResponse({'error': 'Invalid file format. Only CSV files are allowed.'}, status=400)
-#
-#         # Decode and read the file
-#         try:
-#             data = io.StringIO(file.read().decode('utf-8'))
-#         except UnicodeDecodeError:
-#             return JsonResponse({'error': 'Unable to decode file. Ensure the file encoding is UTF-8.'}, status=400)
-#
-#         # Parse the CSV and process data
-#         csv_reader = csv.reader(data)
-#         next(csv_reader)  # Skip the header row
-#
-#         duplicate_entries = []
-#         invalid_entries = []
-#         successful_inserts = 0
-#
-#         for row in csv_reader:
-#             if len(row) != 3:
-#                 # Skip rows with incorrect number of columns
-#                 invalid_entries.append({'row': row, 'error': 'Invalid row format'})
-#                 continue
-#
-#             town, region, number_of_sites = row
-#
-#             # Validate `number_of_sites` is an integer
-#             try:
-#                 number_of_sites = int(number_of_sites)
-#             except ValueError:
-#                 invalid_entries.append({'row': row, 'error': 'Invalid datatype for Number_of_Galamsay_Sites'})
-#                 continue
-#
-#             # Create entry in the database
-#             try:
-#                 GSiteData.objects.create(
-#                     Town=town.strip(),
-#                     Region=region.strip(),
-#                     Number_of_Galamsay_Sites=number_of_sites
-#                 )
-#                 successful_inserts += 1
-#             except IntegrityError:
-#                 # Skip duplicate entries based on Town and Region uniqueness constraint
-#                 duplicate_entries.append({'row': row, 'error': 'Duplicate entry'})
-#
-#         #frontend requests to get statistics
-#         total_g_sites = GSiteData.objects.aggregate(Sum('Number_of_Galamsay_Sites'))
-#         average_gsite_p_region = GSiteData.objects.values('Region').annotate(avg_sites=Avg('Number_of_Galamsay_Sites'))
-#         highest_galamsay_region = GSiteData.objects.values('Region').annotate(total_sites=Sum('Number_of_Galamsay_Sites')).order_by(
-#             '-total_sites')
-#
-#         # Prepare response with summary of results
-#         response = {
-#             'status': 'success',
-#             'details': {
-#                 'successful_inserts': successful_inserts,
-#                 'duplicates': len(duplicate_entries),
-#                 'invalid_entries': len(invalid_entries),
-#                 'skipped_duplicates': duplicate_entries,
-#                 'skipped_invalid_entries': invalid_entries,
-#             },
-#             'analysis_data':{
-#                 'total_galamsey_sites': total_g_sites,
-#                 'average': average_gsite_p_region,
-#                 'threshold': threshold,
-#                 'highest_galamsay_region': highest_galamsay_region,
-#
-#              },
-#         }
-#         return JsonResponse(response, status=200)
-#
-#     return JsonResponse({'error': 'Unsupported HTTP method. Use POST instead.'}, status=405)
-#
-
 @api_view(['POST'])
 @parser_classes([MultiPartParser, FormParser])
-def upload_and_analyze_csv(request):
-    """
-    Handles file upload, performs analysis with data cleaning,
-    saves the cleaned data to DB, and returns the analysis results.
-    """
+def upload_csv(request):
+    if request.method == 'POST':
+        # Check if a file is included in the request
+        if 'file' not in request.FILES:
+            return JsonResponse({'error': 'No file provided'}, status=400)
 
-    # Step 1: Retrieve file and threshold from the request
-    file = request.FILES.get('file', None)
-    threshold = request.data.get('threshold', None)
+        # Retrieve the uploaded file
+        file = request.FILES['file']
 
-    if not file:
-        return Response({"error": "File is required"}, status=status.HTTP_400_BAD_REQUEST)
-    if not threshold:
-        return Response({"error": "Threshold is required"}, status=status.HTTP_400_BAD_REQUEST)
+        threshold = regions_with_sites_above_threshold(request)
 
-    # Validate threshold as a number
-    try:
-        threshold = int(threshold)
-    except ValueError:
-        return Response({"error": "Threshold must be a number"}, status=status.HTTP_400_BAD_REQUEST)
+        # Check if the file is a CSV
+        if not file.name.endswith('.csv'):
+            return JsonResponse({'error': 'Invalid file format. Only CSV files are allowed.'}, status=400)
 
-    # Validate file type
-    if not file.name.endswith('.csv'):
-        return Response({"error": "Invalid file format. Only CSV files are allowed."},
-                        status=status.HTTP_400_BAD_REQUEST)
+        # Decode and read the file
+        try:
+            data = io.StringIO(file.read().decode('utf-8'))
+        except UnicodeDecodeError:
+            return JsonResponse({'error': 'Unable to decode file. Ensure the file encoding is UTF-8.'}, status=400)
 
-    # Step 2: Decode and read CSV file
-    try:
-        data = io.StringIO(file.read().decode('utf-8'))
+        # Parse the CSV and process data
         csv_reader = csv.reader(data)
-        header = next(csv_reader)  # Read header row
-        if len(header) != 3 or header != ['Town', 'Region', 'Number_of_Galamsay_Sites']:
-            return Response({"error": "Invalid CSV header format."}, status=status.HTTP_400_BAD_REQUEST)
-    except UnicodeDecodeError:
-        return Response({"error": "Unable to decode file. Ensure the file encoding is UTF-8."},
-                        status=status.HTTP_400_BAD_REQUEST)
+        next(csv_reader)  # Skip the header row
 
-    # Step 3: Initialize data processing trackers
-    duplicate_entries = []
-    invalid_entries = []
-    successful_inserts = 0
-    rows = []
+        duplicate_entries = []
+        invalid_entries = []
+        successful_inserts = 0
 
-    for row in csv_reader:
-        # Validate row length
-        if len(row) != 3:
-            invalid_entries.append({'row': row, 'error': 'Invalid row format (incorrect column count)'})
-            continue
+        for row in csv_reader:
+            if len(row) != 3:
+                # Skip rows with incorrect number of columns
+                invalid_entries.append({'row': row, 'error': 'Invalid row format'})
+                continue
 
-        town, region, number_of_sites = row
+            town, region, number_of_sites = row
 
-        # Validate `Number_of_Galamsay_Sites` as an integer
-        try:
-            number_of_sites = int(number_of_sites)
-        except ValueError:
-            invalid_entries.append({'row': row, 'error': 'Invalid datatype for Number_of_Galamsay_Sites'})
-            continue
+            # Validate `number_of_sites` is an integer
+            try:
+                number_of_sites = int(number_of_sites)
+            except ValueError:
+                invalid_entries.append({'row': row, 'error': 'Invalid datatype for Number_of_Galamsay_Sites'})
+                continue
 
-        # Append a processed row to the data list for bulk insert later
-        rows.append({
-            'Town': town.strip(),
-            'Region': region.strip(),
-            'Number_of_Galamsay_Sites': number_of_sites
-        })
+            # Create entry in the database
+            try:
+                GSiteData.objects.create(
+                    Town=town.strip(),
+                    Region=region.strip(),
+                    Number_of_Galamsay_Sites=number_of_sites
+                )
+                successful_inserts += 1
+            except IntegrityError:
+                # Skip duplicate entries based on Town and Region uniqueness constraint
+                duplicate_entries.append({'row': row, 'error': 'Duplicate entry'})
 
-    # Step 4: Save metadata to `CsvFileData`
-    csv_file_data = CsvFileData.objects.create(
-        filename=file.name,
-        createdAt=now().isoformat(),
-        Numberofrecords=len(rows)
-    )
+        #frontend requests to get statistics
+        total_g_sites = GSiteData.objects.aggregate(Sum('Number_of_Galamsay_Sites'))
+        average_gsite_p_region = GSiteData.objects.values('Region').annotate(avg_sites=Avg('Number_of_Galamsay_Sites'))
+        highest_galamsay_region = GSiteData.objects.values('Region').annotate(total_sites=Sum('Number_of_Galamsay_Sites')).order_by(
+            '-total_sites')
 
-    # Step 5: Insert rows into `GSiteData` with duplicate checks
-    for row in rows:
-        try:
-            GSiteData.objects.create(
-                Town=row['Town'],
-                Region=row['Region'],
-                Number_of_Galamsay_Sites=row['Number_of_Galamsay_Sites'],
-                csvfileid=csv_file_data
-            )
-            successful_inserts += 1
-        except IntegrityError:
-            duplicate_entries.append({'row': row, 'error': 'Duplicate entry (Town and Region must be unique)'})
+        # Prepare response with summary of results
+        response = {
+            'status': 'success',
+            'details': {
+                'successful_inserts': successful_inserts,
+                'duplicates': len(duplicate_entries),
+                'invalid_entries': len(invalid_entries),
+                'skipped_duplicates': duplicate_entries,
+                'skipped_invalid_entries': invalid_entries,
+            },
+            'analysis_data':{
+                'total_galamsey_sites': total_g_sites,
+                'average': average_gsite_p_region,
+                'threshold': threshold,
+                'highest_galamsay_region': highest_galamsay_region,
 
-    # Step 6: Perform analysis on the uploaded file's data
-    total_sites = GSiteData.objects.filter(csvfileid=csv_file_data).aggregate(
-        total_sites=Sum('Number_of_Galamsay_Sites')
-    )['total_sites']
-
-    region_with_highest = (
-        GSiteData.objects.filter(csvfileid=csv_file_data)
-        .values('Region')
-        .annotate(total_sites=Sum('Number_of_Galamsay_Sites'))
-        .order_by('-total_sites')
-        .first()
-    )
-    region_with_highest_sites = region_with_highest['Region'] if region_with_highest else None
-
-    cities_exceeding_threshold = list(
-        GSiteData.objects.filter(
-            csvfileid=csv_file_data,
-            Number_of_Galamsay_Sites__gt=threshold
-        ).values_list('Town', flat=True)
-    )
-
-    regional_site_averages = list(
-        GSiteData.objects.filter(csvfileid=csv_file_data)
-        .values('Region')
-        .annotate(avg_sites=Avg('Number_of_Galamsay_Sites'))
-    )
-    formatted_regional_site_averages = [
-        {"region": r['Region'], "avg": r['avg_sites']} for r in regional_site_averages
-    ]
-
-    # Step 7: Prepare the final response
-    response_data = {
-        "id": str(csv_file_data.Id),
-        "filename": csv_file_data.filename,
-        "totalGalamseySites": total_sites,
-        "regionWithHighestGalamseySites": region_with_highest_sites,
-        "citiesExceedingThreshold": cities_exceeding_threshold,
-        "regionalSiteAverages": formatted_regional_site_averages,
-        "threshold": threshold,
-        "createdAt": csv_file_data.createdAt,
-        "details": {
-            "successful_inserts": successful_inserts,
-            "duplicates": len(duplicate_entries),
-            "invalid_entries": len(invalid_entries),
-            "skipped_duplicates": duplicate_entries,
-            "skipped_invalid_entries": invalid_entries,
+             },
         }
-    }
+        return JsonResponse(response, status=200)
 
-    return Response(response_data, status=status.HTTP_201_CREATED)
+    return JsonResponse({'error': 'Unsupported HTTP method. Use POST instead.'}, status=405)
+
+#
+# @api_view(['POST'])
+# @parser_classes([MultiPartParser, FormParser])
+# def upload_and_analyze_csv(request):
+#     """
+#     Handles file upload, performs analysis with data cleaning,
+#     saves the cleaned data to DB, and returns the analysis results.
+#     """
+#
+#     # Step 1: Retrieve file and threshold from the request
+#     file = request.FILES.get('file', None)
+#     threshold = request.data.get('threshold', None)
+#
+#     if not file:
+#         return Response({"error": "File is required"}, status=status.HTTP_400_BAD_REQUEST)
+#     if not threshold:
+#         return Response({"error": "Threshold is required"}, status=status.HTTP_400_BAD_REQUEST)
+#
+#     # Validate threshold as a number
+#     try:
+#         threshold = int(threshold)
+#     except ValueError:
+#         return Response({"error": "Threshold must be a number"}, status=status.HTTP_400_BAD_REQUEST)
+#
+#     # Validate file type
+#     if not file.name.endswith('.csv'):
+#         return Response({"error": "Invalid file format. Only CSV files are allowed."},
+#                         status=status.HTTP_400_BAD_REQUEST)
+#
+#     # Step 2: Decode and read CSV file
+#     try:
+#         data = io.StringIO(file.read().decode('utf-8'))
+#         csv_reader = csv.reader(data)
+#         header = next(csv_reader)  # Read header row
+#         if len(header) != 3 or header != ['Town', 'Region', 'Number_of_Galamsay_Sites']:
+#             return Response({"error": "Invalid CSV header format."}, status=status.HTTP_400_BAD_REQUEST)
+#     except UnicodeDecodeError:
+#         return Response({"error": "Unable to decode file. Ensure the file encoding is UTF-8."},
+#                         status=status.HTTP_400_BAD_REQUEST)
+#
+#     # Step 3: Initialize data processing trackers
+#     duplicate_entries = []
+#     invalid_entries = []
+#     successful_inserts = 0
+#     rows = []
+#
+#     for row in csv_reader:
+#         # Validate row length
+#         if len(row) != 3:
+#             invalid_entries.append({'row': row, 'error': 'Invalid row format (incorrect column count)'})
+#             continue
+#
+#         town, region, number_of_sites = row
+#
+#         # Validate `Number_of_Galamsay_Sites` as an integer
+#         try:
+#             number_of_sites = int(number_of_sites)
+#         except ValueError:
+#             invalid_entries.append({'row': row, 'error': 'Invalid datatype for Number_of_Galamsay_Sites'})
+#             continue
+#
+#         # Append a processed row to the data list for bulk insert later
+#         rows.append({
+#             'Town': town.strip(),
+#             'Region': region.strip(),
+#             'Number_of_Galamsay_Sites': number_of_sites
+#         })
+#
+#     # Step 4: Save metadata to `CsvFileData`
+#     csv_file_data = CsvFileData.objects.create(
+#         filename=file.name,
+#         createdAt=now().isoformat(),
+#         Numberofrecords=len(rows)
+#     )
+#
+#     # Step 5: Insert rows into `GSiteData` with duplicate checks
+#     for row in rows:
+#         try:
+#             GSiteData.objects.create(
+#                 Town=row['Town'],
+#                 Region=row['Region'],
+#                 Number_of_Galamsay_Sites=row['Number_of_Galamsay_Sites'],
+#                 csvfileid=csv_file_data
+#             )
+#             successful_inserts += 1
+#         except IntegrityError:
+#             duplicate_entries.append({'row': row, 'error': 'Duplicate entry (Town and Region must be unique)'})
+#
+#     # Step 6: Perform analysis on the uploaded file's data
+#     total_sites = GSiteData.objects.filter(csvfileid=csv_file_data).aggregate(
+#         total_sites=Sum('Number_of_Galamsay_Sites')
+#     )['total_sites']
+#
+#     region_with_highest = (
+#         GSiteData.objects.filter(csvfileid=csv_file_data)
+#         .values('Region')
+#         .annotate(total_sites=Sum('Number_of_Galamsay_Sites'))
+#         .order_by('-total_sites')
+#         .first()
+#     )
+#     region_with_highest_sites = region_with_highest['Region'] if region_with_highest else None
+#
+#     cities_exceeding_threshold = list(
+#         GSiteData.objects.filter(
+#             csvfileid=csv_file_data,
+#             Number_of_Galamsay_Sites__gt=threshold
+#         ).values_list('Town', flat=True)
+#     )
+#
+#     regional_site_averages = list(
+#         GSiteData.objects.filter(csvfileid=csv_file_data)
+#         .values('Region')
+#         .annotate(avg_sites=Avg('Number_of_Galamsay_Sites'))
+#     )
+#     formatted_regional_site_averages = [
+#         {"region": r['Region'], "avg": r['avg_sites']} for r in regional_site_averages
+#     ]
+#
+#     # Step 7: Prepare the final response
+#     response_data = {
+#         "id": str(csv_file_data.Id),
+#         "filename": csv_file_data.filename,
+#         "totalGalamseySites": total_sites,
+#         "regionWithHighestGalamseySites": region_with_highest_sites,
+#         "citiesExceedingThreshold": cities_exceeding_threshold,
+#         "regionalSiteAverages": formatted_regional_site_averages,
+#         "threshold": threshold,
+#         "createdAt": csv_file_data.createdAt,
+#         "details": {
+#             "successful_inserts": successful_inserts,
+#             "duplicates": len(duplicate_entries),
+#             "invalid_entries": len(invalid_entries),
+#             "skipped_duplicates": duplicate_entries,
+#             "skipped_invalid_entries": invalid_entries,
+#         }
+#     }
+#
+#     return Response(response_data, status=status.HTTP_201_CREATED)
