@@ -1,20 +1,21 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
-from .models import GSiteData  # Import the GSiteData model
-from django.apps import apps
+from .models import UploadedFile, SiteRecords  # Importing the models
 
-# Register your models here.
-
-#Ensuring that the site is not registered twice and give an error, we always check if the site is registered
+# Register the User model if not already registered
 if not admin.site.is_registered(User):
-    admin.site.register(User)      #Register the user model
+    admin.site.register(User)
 
-if not admin.site.is_registered(GSiteData):
-    admin.site.register(GSiteData)  #Register the GSiteData model
+# Register UploadedFile model
+@admin.register(UploadedFile)
+class UploadedFileAdmin(admin.ModelAdmin):
+    list_display = ('ID', 'FileName', 'DateUploaded')
+    search_fields = ('FileName',)
+    list_filter = ('DateUploaded',)
 
-if GSiteData not in admin.site._registry:
-    @admin.register(GSiteData)
-    class GSiteDataAdmin(admin.ModelAdmin):
-        list_display = ('Town', 'Region', 'Number_of_Galamsay_Sites')
-        search_fields = ('Town', 'Region')
-        list_filter = ('Region',)
+# Register SiteRecords model
+@admin.register(SiteRecords)
+class SiteRecordsAdmin(admin.ModelAdmin):
+    list_display = ('ID', 'Town', 'Region', 'Number_of_Galamsay_Sites', 'FileID')
+    search_fields = ('Town', 'Region')
+    list_filter = ('Region',)

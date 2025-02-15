@@ -1,19 +1,15 @@
 from rest_framework import serializers
-from .models import GSiteData
+from .models import UploadedFile, SiteRecords
 
-class GSiteDataSerializer(serializers.ModelSerializer):
+class SiteRecordsSerializer(serializers.ModelSerializer):
     class Meta:
-        model = GSiteData
-        fields = ['Town', 'Region', 'Number_of_Galamsay_Sites']
+        model = SiteRecords
+        fields = ['ID', 'Town', 'Region', 'Number_of_Galamsay_Sites']
 
-class HighestRegionSerializer(serializers.Serializer):
-    region = serializers.CharField()
-    total_galamsey_sites = serializers.IntegerField()
+class AverageSitesPerRegionSerializer(serializers.Serializer):
+    Region = serializers.CharField()
+    average_sites = serializers.FloatField()
 
-class ThresHoldDataSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = GSiteData
-        fields = 'Number_of_Galamsay_Sites'
-
-class CSVUploadSerializer(serializers.Serializer):
-    file = serializers.FileField()
+class RegionWithHighestSitesSerializer(serializers.Serializer):
+    Region = serializers.CharField()
+    total_sites = serializers.IntegerField()
