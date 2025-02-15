@@ -117,14 +117,20 @@ The API will be available at:
 ## API Endpoints
 
 ### 1. Required Operations
-
+- **API HOMEPAGE**
+    ![Root API](https://raw.githubusercontent.com/znyadzi/ofwa-Interview-test/refs/heads/main/galamsey_DStore/TestingImages/rootapipage.png)
 - **List all uploaded file details:** `GET /api/uploadedfiles/`
-- ![Uploaded Files](https://raw.githubusercontent.com/znyadzi/ofwa-Interview-test/refs/heads/main/galamsey_DStore/TestingImages/allsitedatauploaded.png)
+    ![Uploaded Files](https://raw.githubusercontent.com/znyadzi/ofwa-Interview-test/refs/heads/main/galamsey_DStore/TestingImages/uploadedfiles.png)
 - **Retrieve all site records for a specific file:** `GET /api/getsitedata/<id>`
+    ![All CSV file Records](https://raw.githubusercontent.com/znyadzi/ofwa-Interview-test/refs/heads/main/galamsey_DStore/TestingImages/allsitedatauploaded.png)
 - **Retrieve average number of sites for a specific entry:** `GET /api/averagesitesperregion/<id>/`
+    ![Average Sites Per Region](https://raw.githubusercontent.com/znyadzi/ofwa-Interview-test/refs/heads/main/galamsey_DStore/TestingImages/averagesitesperregion.png)
 - **Region with Highest Galamsey Sites:** `GET /api/sitesabovethreshold/1/5/<id>/`
+    ![Region With Highest Number of Galamsay Sites](https://raw.githubusercontent.com/znyadzi/ofwa-Interview-test/refs/heads/main/galamsey_DStore/TestingImages/regionwithhighestsites.png)
+- **Regions with sites Higher than a given Threshold:** `GET /api/sitesabovethreshold/<int:fileID>/<int:Threshold>/`
+    ![Regions With Sites Above A Threshold](https://raw.githubusercontent.com/znyadzi/ofwa-Interview-test/refs/heads/main/galamsey_DStore/TestingImages/regionsitesabovethreshold.png)
 - **Upload csv file via API:** `POST /api/upload/`
-
+    ![CSV file Upload](https://raw.githubusercontent.com/znyadzi/ofwa-Interview-test/refs/heads/main/galamsey_DStore/TestingImages/fileupload.png)
 ### 2. Testing Custom Functions
 
 - **Total Galamsey Sites:** `curl -X GET http://127.0.0.1:8000/api/getsitedata/<int:fileID>/`
