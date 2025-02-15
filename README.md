@@ -138,6 +138,7 @@ The API will be available at:
 - **Region with Highest Galamsey Sites:** `curl -X GET /api/region-with-highest-galamsey-sites/`
 - **Regions with sites Higher than a given Threshold:** ` curl -X GET http://127.0.0.1:8000/api/sitesabovethreshold/<int:fileID>/<int:Threshold>/`
 - **All Uploaded Files:** `curl -X GET http://127.0.0.1:8000/api/uploadedfiles/ `
+    ![Tested APIs](https://raw.githubusercontent.com/znyadzi/ofwa-Interview-test/refs/heads/main/galamsey_DStore/TestingImages/testscenarios.png)
 
 ### 3. CSV Upload
 
@@ -154,24 +155,6 @@ The CSV file must have the following headers:
 - `Town`
 - `Region`
 - `Number_of_Galamsay_Sites`
-
----
-
-## Testing the API
-
-You can test the API using:
-
-- **Django REST Framework's Browsable API:** Visit the endpoints in your browser.
-- **Postman:** Use Postman to send requests to the API.
-- **cURL:** Use cURL commands to interact with the API.
-
-### Running Tests
-
-To run the automated tests:
-
-```bash
-python manage.py test
-```
 
 ---
 
