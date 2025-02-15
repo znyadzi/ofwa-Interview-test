@@ -9,13 +9,13 @@ if not admin.site.is_registered(User):
 # Register UploadedFile model
 @admin.register(UploadedFile)
 class UploadedFileAdmin(admin.ModelAdmin):
-    list_display = ('ID', 'FileName', 'DateUploaded')
+    list_display = ('id', 'FileName', 'DateUploaded')
     search_fields = ('FileName',)
     list_filter = ('DateUploaded',)
 
 # Register SiteRecords model
 @admin.register(SiteRecords)
 class SiteRecordsAdmin(admin.ModelAdmin):
-    list_display = ('ID', 'Town', 'Region', 'Number_of_Galamsay_Sites', 'FileID')
+    list_display = ('id', 'Town', 'Region', 'Number_of_Galamsay_Sites', 'FileID')
     search_fields = ('Town', 'Region')
     list_filter = ('Region',)
