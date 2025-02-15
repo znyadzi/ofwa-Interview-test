@@ -119,6 +119,7 @@ The API will be available at:
 ### 1. Required Operations
 
 - **List all uploaded file details:** `GET /api/uploadedfiles/`
+- ![Uploaded Files](https://github.com/znyadzi/ofwa-Interview-test/galamsey_DStore/TestingImages/allsitedatauploaded.png)
 - **Retrieve all site records for a specific file:** `GET /api/getsitedata/<id>`
 - **Retrieve average number of sites for a specific entry:** `GET /api/averagesitesperregion/<id>/`
 - **Region with Highest Galamsey Sites:** `GET /api/sitesabovethreshold/1/5/<id>/`
