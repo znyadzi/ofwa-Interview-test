@@ -1,4 +1,4 @@
-# Mini Galamsey Data Analysis Tool
+# Galamsey Data Analysis API
 
 This project is a Django REST API designed to manage and analyze data related to illegal mining (Galamsey) sites in various towns and regions. It provides functionalities to:
 - Upload and manage Galamsey site data via CSV files.
@@ -79,15 +79,13 @@ venv\Scripts\activate
 ```bash
 source venv/bin/activate
 ```
-
-## 4. Install Dependencies
-
-Install the required Python packages:
-
+## 4. Install Django and Django Rest Framework
 ```bash
-pip install -r requirements.txt
+python install Django
 ```
-
+```bash
+python install djangorestframework
+```
 ## 5. Set Up the Database
 
 Apply migrations to set up the database:
@@ -118,23 +116,27 @@ The API will be available at:
 
 ## API Endpoints
 
-### 1. CRUD Operations
+### 1. Required Operations
 
-- **List all entries:** `GET /api/gsites/`
-- **Create a new entry:** `POST /api/gsites/`
-- **Retrieve a specific entry:** `GET /api/gsites/<id>/`
-- **Update a specific entry:** `PUT /api/gsites/<id>/`
-- **Delete a specific entry:** `DELETE /api/gsites/<id>/`
+- **List all uploaded file details:** `GET /api/uploadedfiles/`
+- **Retrieve all site records for a specific file:** `GET /api/getsitedata/<id>`
+- **Retrieve average number of sites for a specific entry:** `GET /api/averagesitesperregion/<id>/`
+- **Region with Highest Galamsey Sites:** `GET /api/sitesabovethreshold/1/5/<id>/`
+- **Upload csv file via API:** `POST /api/upload/`
 
-### 2. Custom Functions
+### 2. Testing Custom Functions
 
-- **Total Galamsey Sites:** `GET /api/total-galamsey-sites/`
-- **Average Galamsey Sites per Region:** `GET /api/average-galamsey-sites-per-region/`
-- **Region with Highest Galamsey Sites:** `GET /api/region-with-highest-galamsey-sites/`
+- **Total Galamsey Sites:** `curl -X GET http://127.0.0.1:8000/api/getsitedata/<int:fileID>/`
+- **Average Galamsey Sites per Region:** ` curl -X GET http://127.0.0.1:8000/api/averagesitesperregion/<int:fileID>/`
+- **Region with Highest Galamsey Sites:** `curl -X GET /api/region-with-highest-galamsey-sites/`
+- **Regions with sites Higher than a given Threshold:** ` curl -X GET http://127.0.0.1:8000/api/sitesabovethreshold/<int:fileID>/<int:Threshold>/`
+- **All Uploaded Files:** `curl -X GET http://127.0.0.1:8000/api/uploadedfiles/ `
 
 ### 3. CSV Upload
 
-- **Upload CSV:** 
+- **Upload csv file via API:** `GET /api/upload/`
+
+- **Upload CSV Manualy:** 
   - Copy your CSV file into the galamsey\_dataset folder and run:\
     &#x20;python3 manage.py import\_csv galamsey\_dataset/your\_dataset.csv
 
@@ -194,4 +196,3 @@ For questions or feedback, please contact:
 
 - **Your Name:** [znyadzi1@gmail.com](mailto\:znyadzi1@gmail.com)
 - **GitHub:** [znyadzi](https://github.com/znyadzi)
-
