@@ -19,10 +19,12 @@ def api_root(request, format=None):
     API Root endpoint that provides clickable links to all API endpoints in an HTML-rendered view.
     """
     endpoints = {
+        "Files Uploaded": reverse('uploaded-files-list'),
         "Get All Site Data": reverse('get-site-data', args=[1]),  # Example file_id=1
         "Average Sites Per Region": reverse('average-sites-per-region', args=[1]),
         "Sites Above Threshold": reverse('sites-above-threshold', args=[1, 5]),  # Example threshold=5
         "Region with Highest Sites": reverse('region-with-highest-site', args=[1]),
+        "File Upload": reverse('file-upload')
     }
 
     # Generate an HTML response with clickable links
@@ -46,7 +48,7 @@ def get_site_data(request, file_id):
     Retrieve all site records for a specific file.
     """
     try:
-        file = UploadedFile.objects.get(ID=file_id)
+        file = UploadedFile.objects.get(id=file_id)
     except UploadedFile.DoesNotExist:
         return Response({"error": "File not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -62,7 +64,7 @@ def average_sites_per_region(request, file_id):
     Calculate the average number of sites per region for a specific file.
     """
     try:
-        file = UploadedFile.objects.get(ID=file_id)
+        file = UploadedFile.objects.get(id=file_id)
     except UploadedFile.DoesNotExist:
         return Response({"error": "File not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -79,7 +81,7 @@ def sites_above_threshold(request, file_id, threshold):
     Returns Region name and total sites in that region.
     """
     try:
-        file = UploadedFile.objects.get(ID=file_id)
+        file = UploadedFile.objects.get(id=file_id)
     except UploadedFile.DoesNotExist:
         return Response({"error": "File not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -104,7 +106,7 @@ def region_with_highest_site(request, file_id):
     Find the region with the highest number of galamsay sites for a specific file.
     """
     try:
-        file = UploadedFile.objects.get(ID=file_id)
+        file = UploadedFile.objects.get(id=file_id)
     except UploadedFile.DoesNotExist:
         return Response({"error": "File not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -116,6 +118,13 @@ def region_with_highest_site(request, file_id):
     serializer = RegionWithHighestSitesSerializer(highest_region)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+class UploadedFileListView(generics.ListAPIView):
+    queryset = UploadedFile.objects.all()
+    serializer_class = UploadedFileSerializer
+
+    def get(self, request, *args, **kwargs):
+        files = UploadedFile.objects.values("id", "FileName", "DateUploaded")
+        return Response(files)
 
 class FileUploadView(generics.CreateAPIView):
     queryset = UploadedFile.objects.all()

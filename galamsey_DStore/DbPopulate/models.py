@@ -1,6 +1,8 @@
 from typing import Any
 
 from django.db import models
+from django.utils.timezone import localtime
+
 
 # Create your models here.
 
@@ -10,8 +12,7 @@ class UploadedFile(models.Model):
     DateUploaded = models.DateTimeField(auto_now_add=True)
 
     def __init__(self, *args: Any, **kwargs: Any):
-        super().__init__(args, kwargs)
-        self.id = None
+        super().__init__(*args, **kwargs)
 
     def __str__(self):
         return f"[{self.id}] [{self.FileName}] - [{self.DateUploaded}]"

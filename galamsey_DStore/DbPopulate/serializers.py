@@ -15,6 +15,7 @@ class RegionWithHighestSitesSerializer(serializers.Serializer):
     total_sites = serializers.IntegerField()
 
 class UploadedFileSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = UploadedFile
         fields = ['id', 'FileName', 'DateUploaded']
